@@ -6,19 +6,19 @@
 #define MAX_COURSES 12
 #define STR_LEN 12
 
-#define STU_TITTLE "学生ID\t\t学生姓名\t性别\t\t专业\t\t班级\t\t总分\t平均学分平均绩点(专业课)\n"
-#define STU_FORMAT "%s\t\t%s\t\t%s\t\t%s\t\t%s\t\t%.2lf\t%.2lf\t%.2lf\n"
-#define STU_DATA st[i].id, st[i].name, st[i].gender, st[i].major, st[i].className, st[i].totalScore, st[i].avgCredit, st[i].avgGPA
-#define CO_TITTLE "课程ID\t\t课程名\t\t性质\t学分\n"
-#define CO_FORMAT "%s\t\t%s\t\t%u\t%.2lf\n"
+#define STU_TITTLE "学生ID\t\t学生姓名\t性别\t专业\t\t班级\t\t总分\t平均学分绩点\n"
+#define STU_FORMAT "%-16s%-16s%-8s%-16s%-16s%-8.2lf%.2lf\n"
+#define STU_DATA st[i].id, st[i].name, st[i].gender, st[i].major, st[i].className, st[i].totalScore, st[i].avgCreditGPA_major
+#define CO_TITTLE "课程ID\t\t课程名\t\t性质\t总学分\n"
+#define CO_FORMAT "%-16s%-16s%-8u%.2lf\n"
 #define CO_DATA co[i].id, co[i].name, co[i].type, co[i].credit
-#define SCORE_TITTLE "学生ID\t\t学生姓名\t\t课程ID\t\t课程名\t\t总分\t学分\t绩点\t补考\t性质\n"
-#define SCORE_FORMAT_1 "%s\t\t%s\t\t平均分：%.2lf\t平均学分：%.2lf\t平均绩点%.2lf\n"
-#define SCORE_DATA_1 st[i].id, st[i].name, st[i].avgScore, st[i].avgCredit, st[i].avgGPA
-#define SCORE_FORMAT_2 "\t\t\t\t\t%s\t\t%s\t\t%.2lf\t%.2lf\t%.2lf\t%.2lf\t%d\n"
-#define SCORE_DATA_2 st[i]._co[j].id, st[i]._co[j].name, st[i]._co[j].totalScore, st[i]._co[j].credit, st[i]._co[j].gpa, st[i]._co[j].makeupScore, st[i]._co[j].type
-#define SORT_SC_TITTLE "学生ID\t\t学生姓名\t\t总分\t学分\t绩点\t补考\t\n"
-#define SORT_SC_FORMAT "%s\t\t%s\t\t%.2lf\t%.2lf\t%.2lf\t%.2lf\n"
+#define SCORE_TITTLE "学生ID\t\t学生姓名\t课程ID\t\t课程名\t\t总分\t学分\t绩点\t学分绩点\t补考分数\t性质\n"
+#define SCORE_FORMAT_1 "%-16s%-16s平均分：%-8.2lf平均学分绩点：%.2lf\n"
+#define SCORE_DATA_1 st[i].id, st[i].name, st[i].avgScore, st[i].avgCreditGPA_major
+#define SCORE_FORMAT_2 "\t\t\t\t%-16s%-16s%-8.2lf%-8.2lf%-8.2lf%-16.2lf%-16.2lf%d\n"
+#define SCORE_DATA_2 st[i]._co[j].id, st[i]._co[j].name, st[i]._co[j].totalScore, st[i]._co[j].credit, st[i]._co[j].gpa, st[i]._co[j].creditGPA, st[i]._co[j].makeupScore, st[i]._co[j].type
+#define SORT_SC_TITTLE "学生ID\t\t学生姓名\t总分\t学分\t绩点\t补考\n"
+#define SORT_SC_FORMAT "%-16s%-16s%-8.2lf%-8.2lf%-8.2lf%-8.2lf\n"
 #define SORT_SC_DATA st[j].id, st[j].name, st[j]._co[i].totalScore, st[j]._co[i].credit, st[j]._co[i].gpa, st[j]._co[i].makeupScore
 
 typedef enum {
@@ -34,6 +34,7 @@ typedef struct {
     char *name;
     double credit;
     double gpa;
+    double creditGPA;
     double totalScore;
     double makeupScore;
     tp type;
@@ -59,14 +60,15 @@ typedef struct {
     char *ethnicity;
     char *hometown;
     double totalScore;
-    double avgGPA;
-    double avgCredit;
+    double avgCreditGPA;
+    double avgCreditGPA_major;
 } stu;
 
 stu st[MAX_STUDENTS];
 cou co[MAX_COURSES];
 int stuSize = 0;
 int couSize = 0;
+int main();
 // === 1, 2 === //
 int menu();
 void input_student_info();
@@ -87,15 +89,14 @@ void delete_student_by_className();
 void delete_course_by_ID();
 // === 4 === //
 double get_GPA(double max, double real);
-double get_avgGPA(int i);
-double get_avgCredit(int i);
+double get_avg_credit_gpa(int i);
+double get_avg_credit_gpa_major(int i);
 // === 5 === //
 double get_total_score(int i);
 void swap(stu* lhs, stu* rhs);
 void sort_students_by_total_score(int l, int r);
 void sort_students_by_student_id(int l, int r);
-void sort_students_by_avg_Credit(int l, int r);
-void sort_students_by_avg_GPA(int l, int r);
+void sort_students_by_avg_credit_gpa_major(int l, int r);
 void sort_students_by_course_score();
 void quick_sort_for_per(int l, int r, int i);
 
@@ -162,20 +163,16 @@ int main() {
             output_student_info();
             break;
         case 18:
-            sort_students_by_avg_Credit(0, stuSize - 1);
+            sort_students_by_avg_credit_gpa_major(0, stuSize - 1);
             output_student_info();
             break;
         case 19:
-            sort_students_by_avg_GPA(0, stuSize - 1);
-            output_student_info();
-            break;
-        case 20:
             sort_students_by_course_score();
             break;
-        case 21:
+        case 20:
             read_from_file();
             break;
-        case 22:
+        case 21:
             write_to_file();
             break;
         case 0:
@@ -217,12 +214,11 @@ int menu() {
     printf("排序：\n");
     printf("    16. 按总分排序\n");
     printf("    17. 按ID排序\n");
-    printf("    18. 按平均学分排序\n");
-    printf("    19. 按平均学分绩点排序\n");
-    printf("    20. 按课程成绩排序\n");
+    printf("    18. 按平均学分绩点排序\n");
+    printf("    19. 按课程成绩排序\n");
     printf("文件操作：\n");
-    printf("    21. 从文件读取数据\n");
-    printf("    22. 将数据写入文件\n");
+    printf("    20. 从文件读取数据\n");
+    printf("    21. 重写数据到文件\n");
     printf("0. 退出\n");
     printf("请选择：");
     int selection = 0;
@@ -421,11 +417,12 @@ void input_student_score() {
             } while (st[i]._co[k].makeupScore > co[j].makeupScore);*/
             if (co[j].type == 1)
                 st[i]._co[k].gpa = get_GPA(co[j].totalScore, st[i]._co[k].totalScore);
+            st[i]._co[k].creditGPA = st[i]._co[k].credit * st[i]._co[k].gpa;
             ++k;
         }
         st[i]._couSize = k;
-        st[i].avgGPA = get_avgGPA(i);
-        st[i].avgCredit = get_avgCredit(i);
+        st[i].avgCreditGPA = get_avg_credit_gpa(i);
+        st[i].avgCreditGPA_major = get_avg_credit_gpa_major(i);
         st[i].totalScore = get_total_score(i);
         st[i].avgScore = st[i].totalScore / st[i]._couSize;
     }
@@ -435,7 +432,7 @@ void input_student_score() {
 // 输出学生信息函数 === DONE
 void output_student_info() {
     if (stuSize == 0) {
-        printf("没有学生\n");
+        printf("没有学生。。。\n");
         return;
     }
     printf(STU_TITTLE);
@@ -447,7 +444,7 @@ void output_student_info() {
 // 输出课程信息函数 === DONE
 void output_course_info() {
     if (couSize == 0) {
-        printf("没有课程\n");
+        printf("没有课程。。。\n");
         return;
     }
     printf(CO_TITTLE);
@@ -457,6 +454,10 @@ void output_course_info() {
 
 // 输出学生成绩函数 === DONE
 void output_student_score() {
+    if (stuSize == 0) {
+        printf("没有学生。。。\n");
+        return;
+    }
     printf(" * 1 = 学位课\n");
     printf(" * 2 = 专业必修课\n");
     printf(" * 3 = 专业选修课\n");
@@ -636,11 +637,11 @@ void update_course_by_ID() {
             printf("输入非法。。。\n");
             printf("ID：");
         }
-        printf("姓名：");
+        printf("课程名：");
         while (scanf("%s", co[i].name) != 1) {
             scanf("%*[\n]%*c");
             printf("输入非法。。。\n");
-            printf("姓名：");
+            printf("课程名：");
         }
         printf(" * 1 = 学位课\n");
         printf(" * 2 = 专业必修课\n");
@@ -666,6 +667,13 @@ void update_course_by_ID() {
             if (co[i].credit < 0)
                 printf("输入非法。。。\n");
         } while (co[i].credit < 0);
+        for (int i = 0; i < stuSize; ++i) {
+            for (int j = 0; j < st[i]._couSize; ++j) {
+                st[i]._co[j].id = co[j].id;
+                st[i]._co[j].name = co[j].name;
+                st[i]._co[j].type = co[j].type;
+            }
+        }
     }
 }
 
@@ -801,34 +809,30 @@ double get_GPA(double max, double real) {
         return 0;
 }
 
-// 计算平均绩点 === DONE
-double get_avgGPA(int i) {
-    double sumGPA = 0;
-    int cnt = 0;
+// 计算平均学分绩点
+double get_avg_credit_gpa(int i) {
+    double sumAvgCreditGPA = 0, sumCredit = 0;
     for (int j = 0; j < st[i]._couSize; ++j) {
-        if (st[i]._co[j].type == 1) {
-            sumGPA += st[i]._co[j].gpa;
-            ++cnt;
-        }
+        sumAvgCreditGPA += st[i]._co[j].creditGPA;
+        sumCredit += st[i]._co[j].credit;
     }
-    if (cnt == 0)
+    if (sumCredit == 0)
         return 0;
-    return sumGPA / cnt;
+    return sumAvgCreditGPA / sumCredit;
 }
 
-// 计算平均学分 === DONE
-double get_avgCredit(int i) {
-    double sumCredit = 0;
-    int cnt = 0;
+// 计算学位课平均学分绩点
+double get_avg_credit_gpa_major(int i) {
+    double sumAvgCreditGPA = 0, sumCredit = 0;
     for (int j = 0; j < st[i]._couSize; ++j) {
         if (st[i]._co[j].type == 1) {
+            sumAvgCreditGPA += st[i]._co[j].creditGPA;
             sumCredit += st[i]._co[j].credit;
-            ++cnt;
         }
     }
-    if (cnt == 0)
+    if (sumCredit == 0)
         return 0;
-    return sumCredit / cnt;
+    return sumAvgCreditGPA / sumCredit;
 }
 
 // 计算学生总分函数 === DONE
@@ -892,50 +896,27 @@ void sort_students_by_student_id(int l, int r) {
     sort_students_by_student_id(i + 1, r);
 }
 
-// 按照平均学分排序学生函数 === DONE
-void sort_students_by_avg_Credit(int l, int r) {
+// 按照平均学分绩点排序学生函数 === DONE
+void sort_students_by_avg_credit_gpa_major(int l, int r) {
     if (l >= r)
         return;
     int m = (l + r) >> 1;
-    if ((st[l].avgCredit < st[r].avgCredit) ^ (st[l].avgCredit < st[m].avgCredit))
+    if ((st[l].avgCreditGPA < st[r].avgCreditGPA_major) ^ (st[l].avgCreditGPA_major < st[m].avgCreditGPA_major))
         m = l;
-    else if ((st[r].avgCredit < st[l].avgCredit) ^ (st[r].avgCredit < st[m].avgCredit))
+    else if ((st[r].avgCreditGPA_major < st[l].avgCreditGPA_major) ^ (st[r].avgCreditGPA_major < st[m].avgCreditGPA_major))
         m = r;
     swap(&st[l], &st[m]);
     int i = l, j = r;
     while (i < j) {
-        while (i < j && st[j].avgCredit <= st[l].avgCredit)
+        while (i < j && st[j].avgCreditGPA_major <= st[l].avgCreditGPA_major)
             --j;
-        while (i < j && st[i].avgCredit >= st[l].avgCredit)
+        while (i < j && st[i].avgCreditGPA_major >= st[l].avgCreditGPA_major)
             ++i;
         swap(&st[i], &st[j]);
     }
     swap(&st[l], &st[i]);
-    sort_students_by_avg_Credit(l, i - 1);
-    sort_students_by_avg_Credit(i + 1, r);
-}
-
-// 按照平均绩点排序学生函数 === DONE
-void sort_students_by_avg_GPA(int l, int r) {
-    if (l >= r)
-        return;
-    int m = (l + r) >> 1;
-    if ((st[l].avgGPA < st[r].avgGPA) ^ (st[l].avgGPA < st[m].avgGPA))
-        m = l;
-    else if ((st[r].avgGPA < st[l].avgGPA) ^ (st[r].avgGPA < st[m].avgGPA))
-        m = r;
-    swap(&st[l], &st[m]);
-    int i = l, j = r;
-    while (i < j) {
-        while (i < j && st[j].avgGPA <= st[l].avgGPA)
-            --j;
-        while (i < j && st[i].avgGPA >= st[l].avgGPA)
-            ++i;
-        swap(&st[i], &st[j]);
-    }
-    swap(&st[l], &st[i]);
-    sort_students_by_avg_GPA(l, i - 1);
-    sort_students_by_avg_GPA(i + 1, r);
+    sort_students_by_avg_credit_gpa_major(l, i - 1);
+    sort_students_by_avg_credit_gpa_major(i + 1, r);
 }
 
 // 按照每门课程分数排序学生函数 === DONE
@@ -978,39 +959,47 @@ void quick_sort_for_per(int l, int r, int i) {
 void read_from_file() {
     int tempS = stuSize, tempC = couSize;
     char s[255];
-    FILE* studentFile = fopen("student.csv", "r+");
+    FILE* studentFile = fopen("./student.csv", "r+");
     if (studentFile == NULL)
-        fprintf(stdout, "打开文件./student.csv失败。。。\n");
+        fprintf(stderr, "打开文件./student.csv失败。。。\n");
     else {
         fgets(s, 255, studentFile);
         while (fgets(s, 255, studentFile) != NULL) {
+            if (strdup(s) == '\n')
+                break;
             read_student(strdup(s));
             ++stuSize;
         }
         fclose(studentFile);
     }
-    FILE* courseFile = fopen("course.csv", "r+");
+    FILE* courseFile = fopen("./course.csv", "r+");
     if (courseFile == NULL)
-        fprintf(stdout, "打开文件./course.csv失败。。。\n");
+        fprintf(stderr, "打开文件./course.csv失败。。。\n");
     else {
         fgets(s, 255, courseFile);
         while (fgets(s, 255, courseFile) != NULL) {
+            if (strdup(s) == '\n')
+                break;
             read_course(strdup(s));
             ++couSize;
         }
         fclose(courseFile);
     }
-    FILE* scoreFile = fopen("score.csv", "r+");
+    FILE* scoreFile = fopen("./score.csv", "r+");
     if (scoreFile == NULL)
-        fprintf(stdout, "打开文件./score.csv失败。。。\n");
+        fprintf(stderr, "打开文件./score.csv失败。。。\n");
     else {
         int i = tempS, j = 0;
         fgets(s, 255, scoreFile);
         while (fgets(s, 255, scoreFile) != NULL) {
-            read_score(strdup(s), i, j % (couSize + 1));
+            if (strdup(s) == '\n')
+                break;
+            read_score(strdup(s), i, j);
             ++j;
-            if (j % (couSize + 1) == 0)
+            if (j == st[i]._couSize + 1) {
                 ++i;
+                j = 0;
+            }
         }
     }
     fprintf(stdout, "操作成功！\n读取了%d个学生、%d门课程信息。", stuSize - tempS, couSize - tempC);
@@ -1018,33 +1007,35 @@ void read_from_file() {
 
 // 将数据写入文件 === DONE
 void write_to_file() {
-    FILE* studentFile = fopen("student.csv", "r+");
+    FILE* studentFile = fopen("./student.csv", "w+");
     if (studentFile == NULL)
-        fprintf(stdout, "打开文件./student.csv失败。。。\n");
+        fprintf(stderr, "打开文件./student.csv失败。。。\n");
     else {
-        fprintf(studentFile, "学生ID,学生姓名,性别,专业,班级,总分,平均学分,平均绩点(专业课)\n");
-        for (int i = 0; i < stuSize; ++i)
-            fprintf(studentFile, "%s,%s,%s,%s,%s,%.2lf,%.2lf,%.2lf\n", STU_DATA);
+        fprintf(studentFile, "学生ID,学生姓名,性别,专业,班级,总分,平均学分绩点(专业课),修读课程数\n");
+        for (int i = 0; i < stuSize; ++i) {
+            fprintf(studentFile, "%s,%s,%s,%s,%s,%.2lf,%.2lf,", STU_DATA);
+            fprintf(studentFile, "%d\n", st[i]._couSize);
+        }
         fclose(studentFile);
     }
-    FILE* courseFile = fopen("course.csv", "r+");
+    FILE* courseFile = fopen("./course.csv", "w+");
     if (courseFile == NULL)
-        fprintf(stdout, "打开文件./course.csv失败。。。\n");
+        fprintf(stderr, "打开文件./course.csv失败。。。\n");
     else {
-        fprintf(courseFile, "课程ID,课程名,性质,学分\n");
+        fprintf(courseFile, "课程ID,课程名,性质,总学分\n");
         for (int i = 0; i < couSize; ++i)
             fprintf(courseFile, "%s,%s,%u,%.2lf\n", CO_DATA);
         fclose(courseFile);
     }
-    FILE* scoreFile = fopen("score.csv", "r+");
+    FILE* scoreFile = fopen("./score.csv", "w+");
     if (scoreFile == NULL)
-        fprintf(stdout, "打开文件./score.csv失败。。。\n");
+        fprintf(stderr, "打开文件./score.csv失败。。。\n");
     else {
-        fprintf(scoreFile, "学生ID,学生姓名,课程ID,课程名,总分,学分,绩点,补考,性质\n");
+        fprintf(scoreFile, "学生ID,学生姓名,课程ID,课程名,总分,学分,绩点,学分绩点,补考,性质\n");
         for (int i = 0; i < stuSize; ++i) {
-            fprintf(scoreFile, "%s,%s,平均分：,%.2lf,平均学分：,%.2lf,平均绩点：,%.2lf\n", SCORE_DATA_1);
+            fprintf(scoreFile, "%s,%s,平均分：,%.2lf,平均学分绩点(专业课)：,%.2lf\n", SCORE_DATA_1);
             for (int j = 0; j < st[i]._couSize; ++j)
-                fprintf(scoreFile, ",,%s,%s,%.2lf,%.2lf,%.2lf,%.2lf,%u\n", SCORE_DATA_2);
+                fprintf(scoreFile, ",,%s,%s,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%d\n", SCORE_DATA_2);
         }
         fclose(scoreFile);
     }
@@ -1077,12 +1068,10 @@ void read_student(char* s) {
             st[stuSize].totalScore = atof(token);
             break;
         case 6:
-            st[stuSize].avgCredit = atof(token);
+            st[stuSize].avgCreditGPA_major = atof(token);
             break;
         case 7:
-            st[stuSize].avgGPA = atof(token);
-            break;
-        case 8:
+            st[stuSize]._couSize = atoi(token);
             return;
         }
         token = strtok(NULL, ",");
@@ -1109,7 +1098,7 @@ void read_course(char* s) {
             break;
         case 3:
             co[couSize].credit = atof(token);
-            break;
+            return;
         }
         token = strtok(NULL, ",");
         ++i;
@@ -1118,7 +1107,6 @@ void read_course(char* s) {
 
 // 从文件录入成绩信息 -> read_from_file() === DONE
 void read_score(char* s, int i, int j) {
-    st[i]._couSize = couSize;
     char* token = strtok(s, ",");
     if (j == 0) {
         token = strtok(NULL, ",");
@@ -1146,11 +1134,14 @@ void read_score(char* s, int i, int j) {
             st[i]._co[j - 1].gpa = atof(token);
             break;
         case 5:
-            st[i]._co[j - 1].makeupScore = atof(token);
+            st[i]._co[j - 1].creditGPA = atof(token);
             break;
         case 6:
-            st[i]._co[j - 1].type = atoi(token);
+            st[i]._co[j - 1].makeupScore = atof(token);
             break;
+        case 7:
+            st[i]._co[j - 1].type = atoi(token);
+            return;
         }
         token = strtok(NULL, ",");
         ++k;
