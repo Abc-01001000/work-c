@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <direct.h>
 
 #define MAX_STUDENTS 100
 #define MAX_COURSES 12
 #define STR_LEN 12
+#define MAX_USER 12
 
 #define STU_TITTLE "学生ID\t\t学生姓名\t性别\t专业\t\t班级\t\t总分\t平均学分绩点\n"
 #define STU_FORMAT "%-16s%-16s%-8s%-16s%-16s%-8.2lf%.2lf\n"
@@ -68,6 +70,12 @@ stu st[MAX_STUDENTS];
 cou co[MAX_COURSES];
 int stuSize = 0;
 int couSize = 0;
+char* user;
+char* userList[MAX_USER];
+char* path;
+char* pathStu;
+char* pathCou;
+char* pathSco;
 int main();
 // === 1, 2 === //
 int menu();
@@ -106,7 +114,18 @@ void read_student(char* s);
 void read_course(char* s);
 void read_score(char* s, int i, int j);
 
+void user_main();
+int select_user(int lim);
+void make_path();
+
 int main() {
+    user = (char*)malloc(sizeof(char) * STR_LEN);
+    path = (char*)malloc(sizeof(char) * (STR_LEN + 2));
+    pathStu = (char*)malloc(sizeof(char) * 255);
+    pathCou = (char*)malloc(sizeof(char) * 255);
+    pathSco = (char*)malloc(sizeof(char) * 255);
+    user_main();
+    system("cls");
     while (1) {
         switch (menu()) {
         case 1:
@@ -179,6 +198,9 @@ int main() {
             printf("正在退出。。。\n");
             exit(0);
             break;
+        case -1:
+            user_main();
+            break;
         default:
             printf("输入非法。。。\n");
         }
@@ -190,36 +212,24 @@ int main() {
 
 // 菜单函数 === DONE
 int menu() {
-    printf("===== 学生信息管理系统 =====\n");
-    printf("输入：\n");
-    printf("    1. 输入学生信息\n");
-    printf("    2. 输入课程信息\n");
-    printf("    3. 输入学生课程成绩\n");
-    printf("输出：\n");
-    printf("    4. 输出学生信息\n");
-    printf("    5. 输出课程信息\n");
-    printf("    6. 输出学生课程成绩\n");
-    printf("查找：\n");
-    printf("    7. 通过ID查找学生信息\n");
-    printf("    8. 通过班级查找学生信息\n");
-    printf("    9. 通过ID查找课程信息\n");
-    printf("修改：\n");
-    printf("    10. 根据ID修改学生信息\n");
+    printf("用户：%s\n", user);
+    printf("======================= 学生信息管理系统 =======================\n\n");
+    printf("输入：                             删除：\n");
+    printf("    1. 输入学生信息                    13. 根据ID删除学生信息\n");
+    printf("    2. 输入课程信息                    14. 根据班级删除学生信息\n");
+    printf("    3. 输入学生课程成绩                15. 根据ID删除课程信息\n");
+    printf("输出：                             排序：\n");
+    printf("    4. 输出学生信息                    16. 按总分排序\n");
+    printf("    5. 输出课程信息                    17. 按ID排序\n");
+    printf("    6. 输出学生课程成绩                18. 按平均学分绩点排序\n");
+    printf("查找：                                 19. 按课程成绩排序\n");
+    printf("    7. 通过ID查找学生信息          文件操作：\n");
+    printf("    8. 通过班级查找学生信息            20. 从文件读取数据\n");
+    printf("    9. 通过ID查找课程信息              21. 重写数据到文件\n");
+    printf("修改：                            -1. 切换用户\n");
+    printf("    10. 根据ID修改学生信息         0. 退出\n");
     printf("    11. 根据班级修改学生信息\n");
     printf("    12. 根据ID修改课程信息\n");
-    printf("删除：\n");
-    printf("    13. 根据ID删除学生信息\n");
-    printf("    14. 根据班级删除学生信息\n");
-    printf("    15. 根据ID删除课程信息\n");
-    printf("排序：\n");
-    printf("    16. 按总分排序\n");
-    printf("    17. 按ID排序\n");
-    printf("    18. 按平均学分绩点排序\n");
-    printf("    19. 按课程成绩排序\n");
-    printf("文件操作：\n");
-    printf("    20. 从文件读取数据\n");
-    printf("    21. 重写数据到文件\n");
-    printf("0. 退出\n");
     printf("请选择：");
     int selection = 0;
     while (scanf("%d", &selection) != 1) {
@@ -247,11 +257,21 @@ void input_student_info() {
         printf("// === %d === //\n", i + 1);
         printf("ID：");
         char* id = (char*)malloc(sizeof(char) * STR_LEN);
-        while (scanf("%s", id) != 1) {
-            scanf("%*[^\n]%*c");
-            printf("输入非法。。。\n");
-            printf("ID：");
-        }
+        int flag;
+        do {
+            flag = 0;
+            while (scanf("%s", id) != 1) {
+                scanf("%*[^\n]%*c");
+                printf("输入非法。。。\n");
+                printf("ID：");
+            }
+            for (int j = 0; j < stuSize; ++j) {
+                if (strcmp(st[j].id, id) == 0) {
+                    flag = 1;
+                    printf("该id已存在，请重新输入！\n");
+                }
+            }
+        } while (flag);
         st[i].id = id;
         printf("姓名：");
         char* name = (char*)malloc(sizeof(char) * STR_LEN);
@@ -308,11 +328,21 @@ void input_course_info() {
         printf("// === %d === //\n", i + 1);
         printf("课程ID：");
         char* id = (char*)malloc(sizeof(char) * STR_LEN);
-        while (scanf("%s", id) != 1) {
-            scanf("%*[^\n]%*c");
-            printf("输入非法。。。\n");
-            printf("课程ID：");
-        }
+        int flag;
+        do {
+            flag = 0;
+            while (scanf("%s", id) != 1) {
+                scanf("%*[^\n]%*c");
+                printf("输入非法。。。\n");
+                printf("课程ID：");
+            }
+            for (int j = 0; j < couSize; ++j) {
+                if (strcmp(co[j].id, id) == 0) {
+                    flag = 1;
+                    printf("该id已存在，请重新输入！\n");
+                }
+            }
+        } while (flag);
         co[i].id = id;
         printf("课程名：");
         char* name = (char*)malloc(sizeof(char) * STR_LEN);
@@ -809,7 +839,7 @@ double get_GPA(double max, double real) {
         return 0;
 }
 
-// 计算平均学分绩点
+// 计算平均学分绩点 === DONE
 double get_avg_credit_gpa(int i) {
     double sumAvgCreditGPA = 0, sumCredit = 0;
     for (int j = 0; j < st[i]._couSize; ++j) {
@@ -821,7 +851,7 @@ double get_avg_credit_gpa(int i) {
     return sumAvgCreditGPA / sumCredit;
 }
 
-// 计算学位课平均学分绩点
+// 计算学位课平均学分绩点 === DONE
 double get_avg_credit_gpa_major(int i) {
     double sumAvgCreditGPA = 0, sumCredit = 0;
     for (int j = 0; j < st[i]._couSize; ++j) {
@@ -955,13 +985,13 @@ void quick_sort_for_per(int l, int r, int i) {
     quick_sort_for_per(a + 1, r, i);
 }
 
-// 从文件读取信息函数
+// 从文件读取信息函数 === DONE
 void read_from_file() {
     int tempS = stuSize, tempC = couSize;
     char s[255];
-    FILE* studentFile = fopen("./student.csv", "r+");
+    FILE* studentFile = fopen(pathStu, "r+");
     if (studentFile == NULL)
-        fprintf(stderr, "打开文件./student.csv失败。。。\n");
+        fprintf(stderr, "打开文件%s失败。。。\n", pathStu);
     else {
         fgets(s, 255, studentFile);
         while (fgets(s, 255, studentFile) != NULL) {
@@ -972,9 +1002,9 @@ void read_from_file() {
         }
         fclose(studentFile);
     }
-    FILE* courseFile = fopen("./course.csv", "r+");
+    FILE* courseFile = fopen(pathCou, "r+");
     if (courseFile == NULL)
-        fprintf(stderr, "打开文件./course.csv失败。。。\n");
+        fprintf(stderr, "打开文件%s失败。。。\n", pathCou);
     else {
         fgets(s, 255, courseFile);
         while (fgets(s, 255, courseFile) != NULL) {
@@ -985,9 +1015,9 @@ void read_from_file() {
         }
         fclose(courseFile);
     }
-    FILE* scoreFile = fopen("./score.csv", "r+");
+    FILE* scoreFile = fopen(pathSco, "r+");
     if (scoreFile == NULL)
-        fprintf(stderr, "打开文件./score.csv失败。。。\n");
+        fprintf(stderr, "打开文件%s失败。。。\n", pathSco);
     else {
         int i = tempS, j = 0;
         fgets(s, 255, scoreFile);
@@ -1007,9 +1037,9 @@ void read_from_file() {
 
 // 将数据写入文件 === DONE
 void write_to_file() {
-    FILE* studentFile = fopen("./student.csv", "w+");
+    FILE* studentFile = fopen(pathStu, "w");
     if (studentFile == NULL)
-        fprintf(stderr, "打开文件./student.csv失败。。。\n");
+        fprintf(stderr, "打开文件%s失败。。。\n", pathStu);
     else {
         fprintf(studentFile, "学生ID,学生姓名,性别,专业,班级,总分,平均学分绩点(专业课),修读课程数\n");
         for (int i = 0; i < stuSize; ++i) {
@@ -1018,18 +1048,18 @@ void write_to_file() {
         }
         fclose(studentFile);
     }
-    FILE* courseFile = fopen("./course.csv", "w+");
+    FILE* courseFile = fopen(pathCou, "w");
     if (courseFile == NULL)
-        fprintf(stderr, "打开文件./course.csv失败。。。\n");
+        fprintf(stderr, "打开文件%s失败。。。\n", pathCou);
     else {
         fprintf(courseFile, "课程ID,课程名,性质,总学分\n");
         for (int i = 0; i < couSize; ++i)
             fprintf(courseFile, "%s,%s,%u,%.2lf\n", CO_DATA);
         fclose(courseFile);
     }
-    FILE* scoreFile = fopen("./score.csv", "w+");
+    FILE* scoreFile = fopen(pathSco, "w");
     if (scoreFile == NULL)
-        fprintf(stderr, "打开文件./score.csv失败。。。\n");
+        fprintf(stderr, "打开文件%s失败。。。\n", pathSco);
     else {
         fprintf(scoreFile, "学生ID,学生姓名,课程ID,课程名,总分,学分,绩点,学分绩点,补考,性质\n");
         for (int i = 0; i < stuSize; ++i) {
@@ -1040,7 +1070,7 @@ void write_to_file() {
         fclose(scoreFile);
     }
     fprintf(stdout, "操作成功！\n%d个学生，%d门课程及成绩都已成功写入文件：\n", stuSize, couSize);
-    fprintf(stdout, "./student.csv\n./course.csv\n./score.csv\n");
+    fprintf(stdout, "%s\n%s\n%s\n", pathStu, pathCou, pathSco);
 }
 
 // 从文件录入学生信息 -> read_from_file() === DONE
@@ -1146,4 +1176,147 @@ void read_score(char* s, int i, int j) {
         token = strtok(NULL, ",");
         ++k;
     }
+}
+
+// 对用户进行操作
+void user_main() {
+    FILE* fp = fopen("./user.txt", "r+");
+    if (fp == NULL) {
+        fprintf(stderr, "打开用户数据失败，请重试。。。\n");
+        return;
+    }
+    int i = 0, lim;
+    userList[i] = (char*)malloc(sizeof(char) * STR_LEN);
+    while (fgets(userList[i], STR_LEN, fp) != NULL) {
+        userList[i][strcspn(userList[i], "\n")] = 0;
+        fprintf(stdout, "%d、%s\n", i + 1, userList[i]);
+        ++i;
+        userList[i] = (char*)malloc(sizeof(char) * STR_LEN);
+    }
+    lim = i;
+    fprintf(stdout, "-1删除用户    0、新建用户\n");
+    i = select_user(lim);
+    if (i == 0) {
+        char* tempUser = (char*)malloc(sizeof(char) * STR_LEN);
+        char* tempPath = (char*)malloc(sizeof(char) * (STR_LEN + 2));
+        fprintf(stdout, "请输入用户名：");
+        while (scanf("%s", tempUser) != 1) {
+            scanf("%*[*\n]%*c");
+            fprintf(stderr, "输入非法。。。\n");
+            fprintf(stdout, "请输入用户名：");
+        }
+        strcpy(tempPath, "./");
+        strcat(tempPath, tempUser);
+        if (_mkdir(tempPath) == -1) {
+            fprintf(stderr, "创建用户失败，请重试。。。\n");
+            return;
+        }
+        strcpy(user, tempUser);
+        fprintf(fp, "%s\n", user);
+        free(tempUser);
+        free(tempPath);
+    } else if (i == -1) {
+        for (int j = 0; j < lim; ++j) {
+            fprintf(stdout, "%d、%s\n", j + 1, userList[j]);
+        }
+        fprintf(stdout, "-1删除所有用户    0、取消\n");
+        i = select_user(lim);
+        if (i == 0) {
+            return;
+        } else if (i == -1) {
+            printf("确认要继续吗？(Y/N)：");
+            char confirm;
+            getchar();
+            while (scanf("%c", &confirm) != 1) {
+                scanf("%*[^\n]%*c");
+                printf("输入非法。。。\n");
+            }
+            if (confirm == 'N' || confirm == 'n')
+                return;
+            for (int j = 0; j < lim; ++j) {
+                strcpy(user, userList[j]);
+                make_path();
+                remove(pathStu);
+                remove(pathCou);
+                remove(pathSco);
+                if (_rmdir(path) == -1) {
+                    fprintf(stderr, "用户目录删除失败。。。\n");
+                    return;
+                }
+            }
+            lim = 0;
+            fclose(fp);
+            fp = fopen("./user.txt", "w+");
+            fprintf(stdout, "删除成功！\n");
+            exit(0);
+        } else {
+            printf("确认要继续吗？(Y/N)：");
+            char confirm;
+            getchar();
+            while (scanf("%c", &confirm) != 1) {
+                scanf("%*[^\n]%*c");
+                printf("输入非法。。。\n");
+            }
+            if (confirm == 'N' || confirm == 'n')
+                return;
+            strcpy(user, userList[i - 1]);
+            make_path();
+            remove(pathStu);
+            remove(pathCou);
+            remove(pathSco);
+            if (_rmdir(path) == -1) {
+                fprintf(stderr, "用户目录删除失败。。。\n");
+                return;
+            }
+            for (int j = i - 1; j < lim - 1; ++j) {
+                userList[j] = userList[j + 1];
+            }
+            --lim;
+            fclose(fp);
+            fp = fopen("./user.txt", "w+");
+            for (int j = 0; j < lim; ++j) {
+                fprintf(fp, "%s\n", userList[j]);
+            }
+            fprintf(stdout, "删除成功！\n");
+        }
+    } else {
+        strcpy(user, userList[i - 1]);
+    }
+    for (i = 0; i < lim; ++i)
+        free(userList[i]);
+    fclose(fp);
+    make_path();
+}
+
+// 用户操作选择
+int select_user(int lim) {
+    int i;
+    do {
+        fprintf(stdout, "请选择：");
+        while (fscanf(stdin, "%d", &i) != 1) {
+            fscanf(stdin, "%*[^\n]%*c");
+            fprintf(stderr, "输入非法。。。\n");
+            fprintf(stdout, "请重新选择：");
+        }
+        if (i > lim || i < -1)
+            fprintf(stderr, "输入非法。。。\n");
+        if (lim == 0 && i == -1)
+            fprintf(stderr, "没有用户数据。。。\n");
+    } while ((i > lim || i < -1) || (lim == 0 && i == -1));
+    return i;
+}
+
+// 生成文件路径
+void make_path() {
+    strcpy(path, "./");
+    strcat(path, user);
+    strcpy(pathStu, "./");
+    strcat(pathStu, user);
+    strcat(pathStu, "/student.csv");
+    strcpy(pathCou, "./");
+    strcat(pathCou, user);
+    strcat(pathCou, "/course.csv");
+    strcpy(pathSco, "./");
+    strcat(pathSco, user);
+    strcat(pathSco, "/score.csv");
 }
